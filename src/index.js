@@ -1,4 +1,4 @@
-import { fetchImg } from './partials/fechImg';
+import { APIService, fetchImg } from './partials/APIservice';
 import axios from 'axios';
 import Notiflix from 'notiflix';
 
@@ -7,18 +7,28 @@ const refs = {
   gallery: document.querySelector('.gallery'),
 };
 
+const ClassApi = new APIService;
+
 refs.form.addEventListener('submit', submitHendler);
 
-function submitHendler(event) {
+
+async function submitHendler(event) {
   event.preventDefault();
   const { searchQuery: input } = refs.form;
-  const searchQuery = input.value;
-  fetchImg(searchQuery.trim()).then(data => renderImg(data));
+  ClassApi.searchPar = input.value;
+  await ClassApi.fetchImgs().then(data => renderImg(data));
+      const loadMoreBtn = createAdditionalImgBtn();
+      refs.gallery.after(loadMoreBtn);
+      const additionalImgBtnEl = document.querySelector('.load-more-btn');
+      additionalImgBtnEl.addEventListener('click', additionalImgBtnHendler);
+}
+
+function additionalImgBtnHendler() {
+  ClassApi.fetchImgs().then(data => renderImg(data));
 }
 
 function renderImg(obj) {
   const dataArray = obj.data.hits;
-  console.log(dataArray);
   const markup = dataArray
     .map(el => {
       const {
@@ -49,7 +59,12 @@ function renderImg(obj) {
 </div>`;
     })
     .join('');
-  refs.gallery.innerHTML = markup;
+  refs.gallery.insertAdjacentHTML('beforeend', markup)
 }
 
-// function renderImage() {}
+function createAdditionalImgBtn() {
+  const additionalImgBtn = document.createElement('button');
+  additionalImgBtn.setAttribute('class', 'load-more-btn');
+  additionalImgBtn.textContent = "Load more"
+  return additionalImgBtn
+}
