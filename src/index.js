@@ -1,30 +1,65 @@
-import { APIService, fetchImg } from './partials/APIservice';
-import axios from 'axios';
-import Notiflix from 'notiflix';
+import { APIService} from './partials/APIservice';
+import { Notify } from 'notiflix';
+import SimpleLightbox from "simplelightbox";
+import "simplelightbox/dist/simple-lightbox.min.css";
 
 const refs = {
   form: document.querySelector('#search-form'),
   gallery: document.querySelector('.gallery'),
 };
 
+init();
+
+
 const ClassApi = new APIService;
 
-refs.form.addEventListener('submit', submitHendler);
-
+function init() {
+const clearBtn = createClearBtn();
+  refs.form.append(clearBtn);
+  clearBtnEl = document.querySelector('.clear');
+  clearBtnEl.addEventListener('click', clearBtnHandler)
+  refs.form.addEventListener('submit', submitHendler);
+}
 
 async function submitHendler(event) {
   event.preventDefault();
+  deleteadditionalImgBtn();
+  refs.gallery.innerHTML = '';
+  ClassApi.page = 1;
   const { searchQuery: input } = refs.form;
   ClassApi.searchPar = input.value;
-  await ClassApi.fetchImgs().then(data => renderImg(data));
-      const loadMoreBtn = createAdditionalImgBtn();
-      refs.gallery.after(loadMoreBtn);
-      const additionalImgBtnEl = document.querySelector('.load-more-btn');
-      additionalImgBtnEl.addEventListener('click', additionalImgBtnHendler);
+  await ClassApi.fetchImgs()
+    .then(data => {
+        Notify.success(`Hooray! We found totalHits images.${data.data.totalHits}`)
+        renderImg(data);
+        if (data.data.total === 0) {
+          Notify.failure('Sorry, there are no images matching your search query. Please try again.');
+          return
+    }
+          console.log(data);
+          const loadMoreBtn = createAdditionalImgBtn();
+          refs.gallery.after(loadMoreBtn);
+          const additionalImgBtnEl = document.querySelector('.load-more-btn');
+          additionalImgBtnEl.addEventListener('click', additionalImgBtnHendler);
+  });
+}
+
+function clearBtnHandler() {
+  refs.gallery.innerHTML = '';
+  refs.form.searchQuery.value = '';
+deleteadditionalImgBtn()
 }
 
 function additionalImgBtnHendler() {
-  ClassApi.fetchImgs().then(data => renderImg(data));
+  ClassApi.page += 1;
+  ClassApi.fetchImgs()
+    .then(response => {
+      if (response.data.hits < ClassApi.page * ClassApi.perPage) {
+        Notify.failure("We're sorry, but you've reached the end of search results.");
+        deleteadditionalImgBtn();
+      }
+      renderImg(response)
+    })
 }
 
 function renderImg(obj) {
@@ -40,8 +75,9 @@ function renderImg(obj) {
         comments,
         downloads,
       } = el;
-      return `<div class="photo-card">
-  <img src="${webformatURL}" alt="" loading="lazy" />
+      return `    
+      <div class="photo-card">
+  <a href="${largeImageURL}"> <img src="${webformatURL}" alt="${tags}" loading="lazy" />  </a>
   <div class="info">
     <p class="info-item">
       <b>Likes: ${likes}</b>
@@ -56,11 +92,18 @@ function renderImg(obj) {
       <b>Downloads: ${downloads}</b>
     </p>
   </div>
-</div>`;
+</div>
+`;
     })
     .join('');
-  refs.gallery.insertAdjacentHTML('beforeend', markup)
-}
+  refs.gallery.insertAdjacentHTML('beforeend', markup);
+  let lightbox = new SimpleLightbox('.gallery a', {
+  captionDelay: 250,
+  overlayOpacity: 0.6,
+  captionPosition: 'outside',
+  captionDelay: 250,
+});
+  }
 
 function createAdditionalImgBtn() {
   const additionalImgBtn = document.createElement('button');
@@ -68,3 +111,19 @@ function createAdditionalImgBtn() {
   additionalImgBtn.textContent = "Load more"
   return additionalImgBtn
 }
+
+function createClearBtn() {
+  const ClearBtn = document.createElement('button');
+  ClearBtn.setAttribute('class', 'clear');
+  ClearBtn.setAttribute('type', 'button');
+  ClearBtn.textContent = "Clear"
+  return ClearBtn
+}
+
+function deleteadditionalImgBtn() {
+  const additionalImgBtnEl = document.querySelector('.load-more-btn');
+  if (additionalImgBtnEl) {
+    additionalImgBtnEl.remove();
+  }
+}
+
