@@ -13,12 +13,21 @@ init();
 
 const ClassApi = new APIService;
 
+let lightbox = new SimpleLightbox('.gallery a', {
+  captionDelay: 250,
+  overlayOpacity: 0.6,
+  captionPosition: 'outside',
+  captionDelay: 250,
+});
+
 function init() {
 const clearBtn = createClearBtn();
   refs.form.append(clearBtn);
   clearBtnEl = document.querySelector('.clear');
   clearBtnEl.addEventListener('click', clearBtnHandler)
   refs.form.addEventListener('submit', submitHendler);
+
+  
 }
 
 async function submitHendler(event) {
@@ -30,13 +39,12 @@ async function submitHendler(event) {
   ClassApi.searchPar = input.value;
   await ClassApi.fetchImgs()
     .then(data => {
+      if (data.data.total === 0) {
+        Notify.failure('Sorry, there are no images matching your search query. Please try again.');
+        return
+  }
         Notify.success(`Hooray! We found totalHits images.${data.data.totalHits}`)
         renderImg(data);
-        if (data.data.total === 0) {
-          Notify.failure('Sorry, there are no images matching your search query. Please try again.');
-          return
-    }
-          console.log(data);
           const loadMoreBtn = createAdditionalImgBtn();
           refs.gallery.after(loadMoreBtn);
           const additionalImgBtnEl = document.querySelector('.load-more-btn');
@@ -77,7 +85,7 @@ function renderImg(obj) {
       } = el;
       return `    
       <div class="photo-card">
-  <a href="${largeImageURL}"> <img src="${webformatURL}" alt="${tags}" loading="lazy" />  </a>
+  <a class="img-link" href="${largeImageURL}"> <img src="${webformatURL}" alt="${tags}" loading="lazy"/>  </a>
   <div class="info">
     <p class="info-item">
       <b>Likes: ${likes}</b>
@@ -97,12 +105,7 @@ function renderImg(obj) {
     })
     .join('');
   refs.gallery.insertAdjacentHTML('beforeend', markup);
-  let lightbox = new SimpleLightbox('.gallery a', {
-  captionDelay: 250,
-  overlayOpacity: 0.6,
-  captionPosition: 'outside',
-  captionDelay: 250,
-});
+  lightbox.refresh()
   }
 
 function createAdditionalImgBtn() {

@@ -10,7 +10,7 @@ class APIService {
     this.orientation = 'horizontal',
     this.safesearch = 'true',
     this.page = 1,
-    this.perPage = 3
+    this.perPage = 40
   }
   
   async fetchImgs() {
