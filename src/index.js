@@ -23,6 +23,7 @@ let lightbox = new SimpleLightbox('.gallery a', {
 function init() {
 const clearBtn = createClearBtn();
   refs.form.append(clearBtn);
+  console.log(clearBtn);
   clearBtnEl = document.querySelector('.clear');
   clearBtnEl.addEventListener('click', clearBtnHandler)
   refs.form.addEventListener('submit', submitHendler);
