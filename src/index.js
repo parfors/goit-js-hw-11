@@ -46,7 +46,8 @@ async function submitHendler(event) {
           const loadMoreBtn = createAdditionalImgBtn();
           refs.gallery.after(loadMoreBtn);
           const additionalImgBtnEl = document.querySelector('.load-more-btn');
-          additionalImgBtnEl.addEventListener('click', additionalImgBtnHendler);
+      additionalImgBtnEl.addEventListener('click', additionalImgBtnHendler);
+      makeScroll();
   });
 }
 
@@ -127,4 +128,16 @@ function deleteadditionalImgBtn() {
     additionalImgBtnEl.remove();
   }
 }
+
+function makeScroll() {
+
+const { height: cardHeight } = document
+  .querySelector(".gallery")
+    .firstElementChild.getBoundingClientRect();
+  window.scrollBy({
+  top: cardHeight * 2,
+  behavior: "smooth",
+});
+}
+
 
